@@ -227,6 +227,29 @@
             </div>
 
             <div class="border-t border-red-950 pt-4 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-semibold text-white">Archivio CSV da GitHub</h3>
+                        <p class="text-[11px] text-stone-400">Legge i risultati dal file dati/risultati.csv caricato nella repository.</p>
+                    </div>
+                    <button onclick="loadGitHubCSVResults()" class="bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs px-3 py-2 rounded-lg border border-stone-700">
+                        <i class="fa-solid fa-rotate mr-1"></i> Aggiorna CSV GitHub
+                    </button>
+                </div>
+                <div id="github-csv-status" class="rounded-xl border border-stone-700 bg-stone-950/60 p-3 text-xs text-stone-300">Caricamento del file CSV...</div>
+                <div class="overflow-x-auto rounded-xl border border-red-950">
+                    <table class="w-full text-left border-collapse min-w-[850px]">
+                        <thead class="bg-red-950/70 text-stone-300 text-[11px] uppercase">
+                            <tr><th class="p-2.5">Atleta</th><th class="p-2.5">1 km</th><th class="p-2.5">3 km (1)</th><th class="p-2.5">3 km (2)</th><th class="p-2.5">3 km (3)</th><th class="p-2.5">Totale 3 km</th><th class="p-2.5">Ritmo</th><th class="p-2.5">Note</th></tr>
+                        </thead>
+                        <tbody id="github-csv-results-body" class="divide-y divide-red-950/40 text-xs text-stone-200">
+                            <tr><td colspan="8" class="p-5 text-center text-stone-500">Caricamento...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="border-t border-red-950 pt-4 space-y-3">
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <h3 class="text-sm font-semibold text-white">Archivio online</h3>
@@ -838,6 +861,69 @@
             }
         }
 
+        function parseSemicolonCSV(text) {
+            const rows = [];
+            let row = [], field = "", quoted = false;
+            text = text.replace(/^\\uFEFF/, "");
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i], next = text[i + 1];
+                if (ch === '"' && quoted && next === '"') { field += '"'; i++; }
+                else if (ch === '"') quoted = !quoted;
+                else if (ch === ";" && !quoted) { row.push(field); field = ""; }
+                else if ((ch === "\n" || ch === "\r") && !quoted) {
+                    if (ch === "\r" && next === "\n") i++;
+                    row.push(field); field = "";
+                    if (row.some(v => v.trim() !== "")) rows.push(row);
+                    row = [];
+                } else field += ch;
+            }
+            if (field.length || row.length) { row.push(field); if (row.some(v => v.trim() !== "")) rows.push(row); }
+            return rows;
+        }
+
+        async function loadGitHubCSVResults() {
+            const status = document.getElementById("github-csv-status");
+            const body = document.getElementById("github-csv-results-body");
+            status.textContent = "Caricamento risultati dalla repository GitHub...";
+            try {
+                const url = "https://raw.githubusercontent.com/ilbeppe90/Cronometro/main/dati/risultati.csv?ts=" + Date.now();
+                const response = await fetch(url, {cache:"no-store"});
+                if (!response.ok) throw new Error("File non disponibile (HTTP " + response.status + "). Controlla che esista dati/risultati.csv.");
+                const text = await response.text();
+                const parsed = parseSemicolonCSV(text);
+                if (parsed.length < 2) throw new Error("Il CSV è vuoto o non contiene righe di risultati.");
+                const headers = parsed[0].map(h => h.trim());
+                const idx = names => headers.findIndex(h => names.includes(normalizeColumnName(h)));
+                const columns = {
+                    athlete: idx(["atleta","nome"]),
+                    oneKm: idx(["1kmtempo","1km","tempo1km"]),
+                    split1: idx(["3kmtempo1","3kmtempo1","parziale1"]),
+                    split2: idx(["3kmtempo2","parziale2"]),
+                    split3: idx(["3kmtempo3","parziale3"]),
+                    total: idx(["3kmtempo","tempo3km","totale3km"]),
+                    pace: idx(["ritmo3km","passo3km","ritmo"]),
+                    notes: idx(["note","osservazioni"])
+                };
+                if (columns.athlete < 0) throw new Error("Non trovo la colonna Atleta nell'intestazione del CSV.");
+                body.replaceChildren();
+                let count = 0;
+                parsed.slice(1).forEach(values => {
+                    const athlete = (values[columns.athlete] || "").trim();
+                    if (!athlete) return;
+                    const tr = document.createElement("tr");
+                    [athlete, columns.oneKm, columns.split1, columns.split2, columns.split3, columns.total, columns.pace, columns.notes]
+                        .forEach((col, i) => appendCell(tr, i === 0 ? col : (col >= 0 ? (values[col] || "").trim() : "")));
+                    body.appendChild(tr);
+                    count++;
+                });
+                if (!count) throw new Error("Il CSV non contiene atlete con nome valorizzato.");
+                status.textContent = count + " risultati caricati dal file dati/risultati.csv su GitHub.";
+            } catch (error) {
+                status.textContent = "Errore nel caricamento del CSV: " + error.message;
+                body.innerHTML = '<tr><td colspan="8" class="p-5 text-center text-rose-300">Impossibile caricare il CSV.</td></tr>';
+            }
+        }
+
         function exportTestResultsCSV() {
             if (!cloudResultsCache.length) {
                 showMessage("Archivio vuoto", "Accedi e carica i risultati online prima di esportare.", false);
@@ -859,6 +945,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             const dateInput = document.getElementById("test-date");
             if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
+            loadGitHubCSVResults();
             if (!configureResultsFirebase()) {
                 setCloudStatus("Anteprima Excel disponibile. Per salvare online su tutti i dispositivi, configura Firebase seguendo README-FIREBASE.md.", false);
             }
