@@ -154,118 +154,29 @@
         </div>
 
     
-        <!-- Archivio test: import Excel e sincronizzazione online -->
-        <section id="results-import-section" class="bg-stone-900/90 border border-red-950 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                    <h2 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-file-excel text-emerald-400"></i> Risultati e test — importazione Excel
-                    </h2>
-                    <p class="text-[11px] sm:text-xs text-stone-400 mt-1">Importa i test delle atlete da un file .xlsx e consulta l’archivio anche da altri dispositivi.</p>
-                </div>
-                <div class="flex gap-2 flex-wrap">
-                    <button id="cloud-login-btn" onclick="signInForResults()" class="bg-rose-900 hover:bg-rose-800 text-white text-xs font-medium px-3.5 py-2.5 rounded-xl border border-rose-700/50">
-                        <i class="fa-brands fa-google mr-1"></i> Accedi per sincronizzare
-                    </button>
-                    <button id="cloud-logout-btn" onclick="signOutResults()" class="hidden bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium px-3.5 py-2.5 rounded-xl border border-stone-700">
-                        Esci
-                    </button>
-                </div>
-            </div>
-
-            <div id="cloud-status" class="rounded-xl border border-amber-900/60 bg-amber-950/30 p-3 text-xs text-amber-200">
-                Archivio online non ancora configurato. L’anteprima Excel funziona; per sincronizzare tra dispositivi occorre collegare Firebase seguendo le istruzioni in README-FIREBASE.md.
-            </div>
-            <div id="signed-in-status" class="hidden text-xs text-stone-300"></div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                    <label for="test-date" class="block text-xs text-stone-300 mb-1.5">Data del test</label>
-                    <input id="test-date" type="date" class="w-full bg-stone-950 border border-red-950/80 rounded-xl p-2.5 text-sm text-stone-100 focus:outline-none focus:border-rose-600">
-                </div>
-                <div>
-                    <label for="test-type" class="block text-xs text-stone-300 mb-1.5">Tipo di test</label>
-                    <select id="test-type" class="w-full bg-stone-950 border border-red-950/80 rounded-xl p-2.5 text-sm text-stone-100 focus:outline-none focus:border-rose-600">
-                        <option value="Test iniziale">Test iniziale</option>
-                        <option value="1 km">Test 1 km</option>
-                        <option value="3 km">Test 3 km</option>
-                        <option value="Ripetute">Ripetute</option>
-                        <option value="Altro">Altro</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="excel-file" class="block text-xs text-stone-300 mb-1.5">File Excel (.xlsx / .xls)</label>
-                    <input id="excel-file" type="file" accept=".xlsx,.xls" class="w-full bg-stone-950 border border-red-950/80 rounded-xl p-2 text-xs text-stone-300 file:mr-2 file:rounded-lg file:border-0 file:bg-rose-900 file:px-3 file:py-2 file:text-white">
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-2">
-                <button onclick="previewExcelResults()" class="bg-stone-800 hover:bg-stone-700 text-stone-100 text-xs font-semibold px-4 py-3 rounded-xl border border-stone-700">
-                    <i class="fa-solid fa-magnifying-glass mr-1.5 text-rose-400"></i> Leggi e controlla file
-                </button>
-                <button id="save-excel-results-btn" onclick="saveExcelResultsToCloud()" disabled class="bg-emerald-800 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-3 rounded-xl border border-emerald-700/60">
-                    <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Importa nell’archivio online
-                </button>
-                <button onclick="exportTestResultsCSV()" class="bg-stone-800 hover:bg-stone-700 text-stone-100 text-xs font-semibold px-4 py-3 rounded-xl border border-stone-700">
-                    <i class="fa-solid fa-file-csv mr-1.5 text-rose-400"></i> Esporta archivio CSV
-                </button>
-            </div>
-
-            <div id="excel-preview-message" class="hidden text-xs rounded-xl p-3"></div>
-            <div id="excel-preview-wrap" class="hidden space-y-2">
-                <h3 class="text-xs font-semibold text-stone-200">Anteprima del file</h3>
-                <div class="overflow-x-auto rounded-xl border border-red-950">
-                    <table class="w-full text-left border-collapse min-w-[850px]">
-                        <thead class="bg-red-950/70 text-stone-300 text-[11px] uppercase">
-                            <tr>
-                                <th class="p-2.5">Atleta</th><th class="p-2.5">1 km</th><th class="p-2.5">3 km (1)</th><th class="p-2.5">3 km (2)</th><th class="p-2.5">3 km (3)</th><th class="p-2.5">Totale 3 km</th><th class="p-2.5">Ritmo</th><th class="p-2.5">Note</th>
-                            </tr>
-                        </thead>
-                        <tbody id="excel-preview-body" class="divide-y divide-red-950/40 text-xs text-stone-200"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="border-t border-red-950 pt-4 space-y-3">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                        <h3 class="text-sm font-semibold text-white">Archivio CSV da GitHub</h3>
-                        <p class="text-[11px] text-stone-400">Legge i risultati dal file dati/risultati.csv caricato nella repository.</p>
-                    </div>
-                    <button onclick="loadGitHubCSVResults()" class="bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs px-3 py-2 rounded-lg border border-stone-700">
-                        <i class="fa-solid fa-rotate mr-1"></i> Aggiorna CSV GitHub
-                    </button>
-                </div>
-                <div id="github-csv-status" class="rounded-xl border border-stone-700 bg-stone-950/60 p-3 text-xs text-stone-300">Caricamento del file CSV...</div>
-                <div class="overflow-x-auto rounded-xl border border-red-950">
-                    <table class="w-full text-left border-collapse min-w-[850px]">
-                        <thead class="bg-red-950/70 text-stone-300 text-[11px] uppercase">
-                            <tr><th class="p-2.5">Atleta</th><th class="p-2.5">1 km</th><th class="p-2.5">3 km (1)</th><th class="p-2.5">3 km (2)</th><th class="p-2.5">3 km (3)</th><th class="p-2.5">Totale 3 km</th><th class="p-2.5">Ritmo</th><th class="p-2.5">Note</th></tr>
-                        </thead>
-                        <tbody id="github-csv-results-body" class="divide-y divide-red-950/40 text-xs text-stone-200">
-                            <tr><td colspan="8" class="p-5 text-center text-stone-500">Caricamento...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="border-t border-red-950 pt-4 space-y-3">
+        <!-- Risultati CSV: visibili su richiesta -->
+        <section id="results-import-section" class="bg-stone-900/90 border border-red-950 rounded-2xl p-4 sm:p-5 shadow-xl">
+            <button id="show-all-results-btn" onclick="toggleGitHubCSVResults()" aria-expanded="false" aria-controls="github-csv-panel"
+                class="w-full bg-rose-900 hover:bg-rose-800 active:bg-rose-950 text-white text-sm font-semibold px-4 py-3 rounded-xl border border-rose-700/50 flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-table-list"></i> Tutti i risultati
+            </button>
+            <div id="github-csv-panel" class="hidden mt-4 space-y-3">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <h3 class="text-sm font-semibold text-white">Archivio online</h3>
-                        <p id="cloud-results-count" class="text-[11px] text-stone-400">Accedi per visualizzare i risultati sincronizzati.</p>
+                        <h3 class="text-sm font-semibold text-white">Risultati dei test</h3>
+                        <p id="github-csv-status" class="text-[11px] text-stone-400">Caricamento del file CSV...</p>
                     </div>
-                    <button onclick="loadCloudResults()" class="bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs px-3 py-2 rounded-lg border border-stone-700">
+                    <button onclick="loadGitHubCSVResults()" class="bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs px-3 py-2 rounded-lg border border-stone-700">
                         <i class="fa-solid fa-rotate mr-1"></i> Aggiorna
                     </button>
                 </div>
                 <div class="overflow-x-auto rounded-xl border border-red-950">
                     <table class="w-full text-left border-collapse min-w-[850px]">
                         <thead class="bg-red-950/70 text-stone-300 text-[11px] uppercase">
-                            <tr><th class="p-2.5">Data</th><th class="p-2.5">Test</th><th class="p-2.5">Atleta</th><th class="p-2.5">1 km</th><th class="p-2.5">Parziali 3 km</th><th class="p-2.5">Totale 3 km</th><th class="p-2.5">Ritmo</th><th class="p-2.5">Note</th></tr>
+                            <tr><th class="p-2.5">Atleta</th><th class="p-2.5">1 km</th><th class="p-2.5">3 km (1)</th><th class="p-2.5">3 km (2)</th><th class="p-2.5">3 km (3)</th><th class="p-2.5">Totale 3 km</th><th class="p-2.5">Ritmo</th><th class="p-2.5">Note</th></tr>
                         </thead>
-                        <tbody id="cloud-results-body" class="divide-y divide-red-950/40 text-xs text-stone-200">
-                            <tr><td colspan="8" class="p-5 text-center text-stone-500">Nessun archivio online collegato.</td></tr>
+                        <tbody id="github-csv-results-body" class="divide-y divide-red-950/40 text-xs text-stone-200">
+                            <tr><td colspan="8" class="p-5 text-center text-stone-500">Premi "Tutti i risultati" per visualizzare la tabella.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -942,13 +853,19 @@
             document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const dateInput = document.getElementById("test-date");
-            if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
-            loadGitHubCSVResults();
-            if (!configureResultsFirebase()) {
-                setCloudStatus("Anteprima Excel disponibile. Per salvare online su tutti i dispositivi, configura Firebase seguendo README-FIREBASE.md.", false);
+        function toggleGitHubCSVResults() {
+            const panel = document.getElementById("github-csv-panel");
+            const button = document.getElementById("show-all-results-btn");
+            const opening = panel.classList.contains("hidden");
+            panel.classList.toggle("hidden", !opening);
+            button.setAttribute("aria-expanded", String(opening));
+            if (opening && !panel.dataset.loaded) {
+                loadGitHubCSVResults().then(() => { panel.dataset.loaded = "true"; });
             }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // I risultati vengono caricati solo quando si apre "Tutti i risultati".
         });
 
     
