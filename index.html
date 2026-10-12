@@ -5,278 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cronometro Atleti - Busta Postale Edition</title>
     <script src="https://cdn.tailwindcss.com">
-        // --- Importazione Excel e archivio cloud Firebase ---
-        // Inserire qui i valori della Web App Firebase; non inserire chiavi private o service-account.
-        const firebaseResultsConfig = {
-            apiKey: "INSERISCI_API_KEY",
-            authDomain: "INSERISCI_PROJECT_ID.firebaseapp.com",
-            projectId: "INSERISCI_PROJECT_ID",
-            appId: "INSERISCI_APP_ID"
-        };
-        let resultsFirebaseReady = false;
-        let resultsAuth = null;
-        let resultsDb = null;
-        let signedInResultsUser = null;
-        let pendingExcelRows = [];
-        let cloudResultsCache = [];
-
-        function configureResultsFirebase() {
-            const configured = firebaseResultsConfig.apiKey &&
-                !firebaseResultsConfig.apiKey.startsWith("INSERISCI_") &&
-                firebaseResultsConfig.projectId &&
-                !firebaseResultsConfig.projectId.startsWith("INSERISCI_") &&
-                firebaseResultsConfig.appId &&
-                !firebaseResultsConfig.appId.startsWith("INSERISCI_");
-            if (!configured || typeof firebase === "undefined") return false;
-            try {
-                if (!firebase.apps.length) firebase.initializeApp(firebaseResultsConfig);
-                resultsAuth = firebase.auth();
-                resultsDb = firebase.firestore();
-                resultsFirebaseReady = true;
-                resultsAuth.onAuthStateChanged(user => {
-                    signedInResultsUser = user || null;
-                    const loginBtn = document.getElementById("cloud-login-btn");
-                    const logoutBtn = document.getElementById("cloud-logout-btn");
-                    const status = document.getElementById("signed-in-status");
-                    if (user) {
-                        loginBtn.classList.add("hidden");
-                        logoutBtn.classList.remove("hidden");
-                        status.classList.remove("hidden");
-                        status.textContent = "Accesso effettuato: " + (user.email || user.displayName || "utente autenticato");
-                        setCloudStatus("Accesso effettuato. L’archivio è pronto per la sincronizzazione.", true);
-                        document.getElementById("save-excel-results-btn").disabled = pendingExcelRows.length === 0;
-                        loadCloudResults();
-                    } else {
-                        loginBtn.classList.remove("hidden");
-                        logoutBtn.classList.add("hidden");
-                        status.classList.add("hidden");
-                        document.getElementById("save-excel-results-btn").disabled = true;
-                        document.getElementById("cloud-results-count").textContent = "Accedi per visualizzare i risultati sincronizzati.";
-                    }
-                });
-                setCloudStatus("Firebase configurato. Accedi con Google per utilizzare l’archivio online.", true);
-                return true;
-            } catch (error) {
-                setCloudStatus("Errore di configurazione Firebase: " + error.message, false);
-                return false;
-            }
-        }
-
-        function setCloudStatus(message, success) {
-            const el = document.getElementById("cloud-status");
-            el.textContent = message;
-            el.className = "rounded-xl border p-3 text-xs " + (success
-                ? "border-emerald-900/60 bg-emerald-950/30 text-emerald-200"
-                : "border-amber-900/60 bg-amber-950/30 text-amber-200");
-        }
-
-        async function signInForResults() {
-            if (!resultsFirebaseReady) {
-                showMessage("Configurazione necessaria", "L’archivio online richiede la configurazione di Firebase. Segui README-FIREBASE.md nel repository.", false);
-                return;
-            }
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                await resultsAuth.signInWithPopup(provider);
-            } catch (error) {
-                showMessage("Accesso non riuscito", error.message, false);
-            }
-        }
-
-        async function signOutResults() {
-            if (resultsAuth) await resultsAuth.signOut();
-        }
-
-        function normalizeColumnName(value) {
-            return String(value == null ? "" : value).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase().replace(/[^a-z0-9]/g, "");
-        }
-
-        function cellValue(row, candidates) {
-            const keys = Object.keys(row);
-            for (const candidate of candidates) {
-                const found = keys.find(key => normalizeColumnName(key) === normalizeColumnName(candidate));
-                if (found !== undefined && row[found] !== null && row[found] !== undefined) return String(row[found]).trim();
-            }
-            return "";
-        }
-
-        function formatImportedTime(value) {
-            if (value === null || value === undefined) return "";
-            if (typeof value === "number" && value >= 0 && value < 1) {
-                const totalSeconds = Math.round(value * 86400);
-                const mm = Math.floor(totalSeconds / 60);
-                const ss = totalSeconds % 60;
-                return String(mm).padStart(2,"0") + ":" + String(ss).padStart(2,"0");
-            }
-            return String(value).trim();
-        }
-
-        async function previewExcelResults() {
-            const fileInput = document.getElementById("excel-file");
-            const message = document.getElementById("excel-preview-message");
-            const wrap = document.getElementById("excel-preview-wrap");
-            if (!fileInput.files || !fileInput.files[0]) {
-                showMessage("File mancante", "Seleziona prima un file Excel .xlsx o .xls.", false);
-                return;
-            }
-            try {
-                const file = fileInput.files[0];
-                const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data, {type:"array", cellDates:true});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rawRows = XLSX.utils.sheet_to_json(firstSheet, {defval:"", raw:false});
-                if (!rawRows.length) throw new Error("Il primo foglio del file non contiene righe di dati.");
-                pendingExcelRows = rawRows.map(row => ({
-                    athlete: cellValue(row, ["Atleta","Nome","Atleta Nome"]),
-                    oneKm: formatImportedTime(cellValue(row, ["1 km (Tempo)","1 km","Tempo 1 km"])),
-                    split1: formatImportedTime(cellValue(row, ["3 km (Tempo) (1)","3 km Tempo 1","Parziale 1"])),
-                    split2: formatImportedTime(cellValue(row, ["3 km (Tempo) (2)","3 km Tempo 2","Parziale 2"])),
-                    split3: formatImportedTime(cellValue(row, ["3 km (Tempo) (3)","3 km Tempo 3","Parziale 3"])),
-                    total3km: formatImportedTime(cellValue(row, ["3 km (Tempo)","Tempo 3 km","Totale 3 km"])),
-                    pace3km: formatImportedTime(cellValue(row, ["Ritmo 3 km","Passo 3 km","Ritmo"])),
-                    notes: cellValue(row, ["Note","Osservazioni"])
-                })).filter(row => row.athlete);
-                if (!pendingExcelRows.length) throw new Error("Non trovo righe con una colonna Atleta/Nome valorizzata. Controlla che le intestazioni siano nella prima riga del foglio.");
-                renderExcelPreview();
-                wrap.classList.remove("hidden");
-                message.className = "text-xs rounded-xl p-3 border border-emerald-900/60 bg-emerald-950/30 text-emerald-200";
-                message.textContent = "Rilevate " + pendingExcelRows.length + " atlete. Controlla l’anteprima prima di importare.";
-                message.classList.remove("hidden");
-                document.getElementById("save-excel-results-btn").disabled = !signedInResultsUser || !resultsFirebaseReady;
-            } catch (error) {
-                pendingExcelRows = [];
-                wrap.classList.add("hidden");
-                message.className = "text-xs rounded-xl p-3 border border-rose-900/60 bg-rose-950/30 text-rose-200";
-                message.textContent = "Impossibile leggere il file: " + error.message;
-                message.classList.remove("hidden");
-            }
-        }
-
-        function appendCell(row, value) {
-            const cell = document.createElement("td");
-            cell.className = "p-2.5";
-            cell.textContent = value || "—";
-            row.appendChild(cell);
-        }
-
-        function renderExcelPreview() {
-            const body = document.getElementById("excel-preview-body");
-            body.replaceChildren();
-            pendingExcelRows.forEach(item => {
-                const row = document.createElement("tr");
-                appendCell(row, item.athlete);
-                appendCell(row, item.oneKm);
-                appendCell(row, item.split1);
-                appendCell(row, item.split2);
-                appendCell(row, item.split3);
-                appendCell(row, item.total3km);
-                appendCell(row, item.pace3km);
-                appendCell(row, item.notes);
-                body.appendChild(row);
-            });
-        }
-
-        async function saveExcelResultsToCloud() {
-            if (!resultsFirebaseReady || !signedInResultsUser) {
-                showMessage("Accesso necessario", "Configura Firebase e accedi con Google prima di importare nell’archivio online.", false);
-                return;
-            }
-            if (!pendingExcelRows.length) {
-                showMessage("Nessun dato", "Prima leggi e controlla un file Excel.", false);
-                return;
-            }
-            const testDate = document.getElementById("test-date").value;
-            const testType = document.getElementById("test-type").value;
-            if (!testDate) {
-                showMessage("Data mancante", "Seleziona la data in cui è stato svolto il test.", false);
-                return;
-            }
-            const button = document.getElementById("save-excel-results-btn");
-            button.disabled = true;
-            try {
-                const collection = resultsDb.collection("users").doc(signedInResultsUser.uid).collection("testResults");
-                const chunks = [];
-                for (let i = 0; i < pendingExcelRows.length; i += 400) chunks.push(pendingExcelRows.slice(i, i + 400));
-                for (const chunk of chunks) {
-                    const batch = resultsDb.batch();
-                    chunk.forEach(item => {
-                        const ref = collection.doc();
-                        batch.set(ref, {...item, testDate, testType, importedAt: firebase.firestore.FieldValue.serverTimestamp()});
-                    });
-                    await batch.commit();
-                }
-                showMessage("Importazione completata", "Importati " + pendingExcelRows.length + " risultati nell’archivio online.", true);
-                await loadCloudResults();
-            } catch (error) {
-                showMessage("Errore di importazione", error.message + " Verifica anche le regole di sicurezza Firestore.", false);
-            } finally {
-                button.disabled = !signedInResultsUser || pendingExcelRows.length === 0;
-            }
-        }
-
-        async function loadCloudResults() {
-            if (!resultsFirebaseReady || !signedInResultsUser) return;
-            const body = document.getElementById("cloud-results-body");
-            body.replaceChildren();
-            try {
-                const snapshot = await resultsDb.collection("users").doc(signedInResultsUser.uid)
-                    .collection("testResults").orderBy("testDate", "desc").limit(1000).get();
-                cloudResultsCache = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
-                document.getElementById("cloud-results-count").textContent = cloudResultsCache.length + " risultati caricati (massimo 1.000 visualizzati).";
-                if (!cloudResultsCache.length) {
-                    const row = document.createElement("tr");
-                    const cell = document.createElement("td");
-                    cell.colSpan = 8;
-                    cell.className = "p-5 text-center text-stone-500";
-                    cell.textContent = "Archivio vuoto. Importa il primo file Excel.";
-                    row.appendChild(cell); body.appendChild(row); return;
-                }
-                cloudResultsCache.forEach(item => {
-                    const row = document.createElement("tr");
-                    appendCell(row, item.testDate || "");
-                    appendCell(row, item.testType || "");
-                    appendCell(row, item.athlete || "");
-                    appendCell(row, item.oneKm || "");
-                    appendCell(row, [item.split1,item.split2,item.split3].filter(Boolean).join(" / "));
-                    appendCell(row, item.total3km || "");
-                    appendCell(row, item.pace3km || "");
-                    appendCell(row, item.notes || "");
-                    body.appendChild(row);
-                });
-            } catch (error) {
-                document.getElementById("cloud-results-count").textContent = "Errore nel caricamento dell’archivio.";
-                setCloudStatus("Non riesco a leggere Firestore: " + error.message + " Controlla le regole indicate in README-FIREBASE.md.", false);
-            }
-        }
-
-        function exportTestResultsCSV() {
-            if (!cloudResultsCache.length) {
-                showMessage("Archivio vuoto", "Accedi e carica i risultati online prima di esportare.", false);
-                return;
-            }
-            const headers = ["Data test","Tipo test","Atleta","1 km (Tempo)","3 km (Tempo) (1)","3 km (Tempo) (2)","3 km (Tempo) (3)","3 km (Tempo)","Ritmo 3 km","Note"];
-            const quote = value => '"' + String(value == null ? "" : value).replace(/"/g,'""') + '"';
-            const rows = cloudResultsCache.map(item => [
-                item.testDate,item.testType,item.athlete,item.oneKm,item.split1,item.split2,item.split3,item.total3km,item.pace3km,item.notes
-            ].map(quote).join(";"));
-            const blob = new Blob(["\uFEFF" + [headers.map(quote).join(";"),...rows].join("\r\n")], {type:"text/csv;charset=utf-8;"});
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "palio_risultati_test_" + new Date().toISOString().slice(0,10) + ".csv";
-            document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const dateInput = document.getElementById("test-date");
-            if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
-            if (!configureResultsFirebase()) {
-                setCloudStatus("Anteprima Excel disponibile. Per salvare online su tutti i dispositivi, configura Firebase seguendo README-FIREBASE.md.", false);
-            }
-        });
-
-    </script>
+</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -864,6 +593,278 @@
         function escapeHtml(str) {
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
+            // --- Importazione Excel e archivio cloud Firebase ---
+        // Inserire qui i valori della Web App Firebase; non inserire chiavi private o service-account.
+        const firebaseResultsConfig = {
+            apiKey: "INSERISCI_API_KEY",
+            authDomain: "INSERISCI_PROJECT_ID.firebaseapp.com",
+            projectId: "INSERISCI_PROJECT_ID",
+            appId: "INSERISCI_APP_ID"
+        };
+        let resultsFirebaseReady = false;
+        let resultsAuth = null;
+        let resultsDb = null;
+        let signedInResultsUser = null;
+        let pendingExcelRows = [];
+        let cloudResultsCache = [];
+
+        function configureResultsFirebase() {
+            const configured = firebaseResultsConfig.apiKey &&
+                !firebaseResultsConfig.apiKey.startsWith("INSERISCI_") &&
+                firebaseResultsConfig.projectId &&
+                !firebaseResultsConfig.projectId.startsWith("INSERISCI_") &&
+                firebaseResultsConfig.appId &&
+                !firebaseResultsConfig.appId.startsWith("INSERISCI_");
+            if (!configured || typeof firebase === "undefined") return false;
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseResultsConfig);
+                resultsAuth = firebase.auth();
+                resultsDb = firebase.firestore();
+                resultsFirebaseReady = true;
+                resultsAuth.onAuthStateChanged(user => {
+                    signedInResultsUser = user || null;
+                    const loginBtn = document.getElementById("cloud-login-btn");
+                    const logoutBtn = document.getElementById("cloud-logout-btn");
+                    const status = document.getElementById("signed-in-status");
+                    if (user) {
+                        loginBtn.classList.add("hidden");
+                        logoutBtn.classList.remove("hidden");
+                        status.classList.remove("hidden");
+                        status.textContent = "Accesso effettuato: " + (user.email || user.displayName || "utente autenticato");
+                        setCloudStatus("Accesso effettuato. L’archivio è pronto per la sincronizzazione.", true);
+                        document.getElementById("save-excel-results-btn").disabled = pendingExcelRows.length === 0;
+                        loadCloudResults();
+                    } else {
+                        loginBtn.classList.remove("hidden");
+                        logoutBtn.classList.add("hidden");
+                        status.classList.add("hidden");
+                        document.getElementById("save-excel-results-btn").disabled = true;
+                        document.getElementById("cloud-results-count").textContent = "Accedi per visualizzare i risultati sincronizzati.";
+                    }
+                });
+                setCloudStatus("Firebase configurato. Accedi con Google per utilizzare l’archivio online.", true);
+                return true;
+            } catch (error) {
+                setCloudStatus("Errore di configurazione Firebase: " + error.message, false);
+                return false;
+            }
+        }
+
+        function setCloudStatus(message, success) {
+            const el = document.getElementById("cloud-status");
+            el.textContent = message;
+            el.className = "rounded-xl border p-3 text-xs " + (success
+                ? "border-emerald-900/60 bg-emerald-950/30 text-emerald-200"
+                : "border-amber-900/60 bg-amber-950/30 text-amber-200");
+        }
+
+        async function signInForResults() {
+            if (!resultsFirebaseReady) {
+                showMessage("Configurazione necessaria", "L’archivio online richiede la configurazione di Firebase. Segui README-FIREBASE.md nel repository.", false);
+                return;
+            }
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await resultsAuth.signInWithPopup(provider);
+            } catch (error) {
+                showMessage("Accesso non riuscito", error.message, false);
+            }
+        }
+
+        async function signOutResults() {
+            if (resultsAuth) await resultsAuth.signOut();
+        }
+
+        function normalizeColumnName(value) {
+            return String(value == null ? "" : value).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase().replace(/[^a-z0-9]/g, "");
+        }
+
+        function cellValue(row, candidates) {
+            const keys = Object.keys(row);
+            for (const candidate of candidates) {
+                const found = keys.find(key => normalizeColumnName(key) === normalizeColumnName(candidate));
+                if (found !== undefined && row[found] !== null && row[found] !== undefined) return String(row[found]).trim();
+            }
+            return "";
+        }
+
+        function formatImportedTime(value) {
+            if (value === null || value === undefined) return "";
+            if (typeof value === "number" && value >= 0 && value < 1) {
+                const totalSeconds = Math.round(value * 86400);
+                const mm = Math.floor(totalSeconds / 60);
+                const ss = totalSeconds % 60;
+                return String(mm).padStart(2,"0") + ":" + String(ss).padStart(2,"0");
+            }
+            return String(value).trim();
+        }
+
+        async function previewExcelResults() {
+            const fileInput = document.getElementById("excel-file");
+            const message = document.getElementById("excel-preview-message");
+            const wrap = document.getElementById("excel-preview-wrap");
+            if (!fileInput.files || !fileInput.files[0]) {
+                showMessage("File mancante", "Seleziona prima un file Excel .xlsx o .xls.", false);
+                return;
+            }
+            try {
+                const file = fileInput.files[0];
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, {type:"array", cellDates:true});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rawRows = XLSX.utils.sheet_to_json(firstSheet, {defval:"", raw:false});
+                if (!rawRows.length) throw new Error("Il primo foglio del file non contiene righe di dati.");
+                pendingExcelRows = rawRows.map(row => ({
+                    athlete: cellValue(row, ["Atleta","Nome","Atleta Nome"]),
+                    oneKm: formatImportedTime(cellValue(row, ["1 km (Tempo)","1 km","Tempo 1 km"])),
+                    split1: formatImportedTime(cellValue(row, ["3 km (Tempo) (1)","3 km Tempo 1","Parziale 1"])),
+                    split2: formatImportedTime(cellValue(row, ["3 km (Tempo) (2)","3 km Tempo 2","Parziale 2"])),
+                    split3: formatImportedTime(cellValue(row, ["3 km (Tempo) (3)","3 km Tempo 3","Parziale 3"])),
+                    total3km: formatImportedTime(cellValue(row, ["3 km (Tempo)","Tempo 3 km","Totale 3 km"])),
+                    pace3km: formatImportedTime(cellValue(row, ["Ritmo 3 km","Passo 3 km","Ritmo"])),
+                    notes: cellValue(row, ["Note","Osservazioni"])
+                })).filter(row => row.athlete);
+                if (!pendingExcelRows.length) throw new Error("Non trovo righe con una colonna Atleta/Nome valorizzata. Controlla che le intestazioni siano nella prima riga del foglio.");
+                renderExcelPreview();
+                wrap.classList.remove("hidden");
+                message.className = "text-xs rounded-xl p-3 border border-emerald-900/60 bg-emerald-950/30 text-emerald-200";
+                message.textContent = "Rilevate " + pendingExcelRows.length + " atlete. Controlla l’anteprima prima di importare.";
+                message.classList.remove("hidden");
+                document.getElementById("save-excel-results-btn").disabled = !signedInResultsUser || !resultsFirebaseReady;
+            } catch (error) {
+                pendingExcelRows = [];
+                wrap.classList.add("hidden");
+                message.className = "text-xs rounded-xl p-3 border border-rose-900/60 bg-rose-950/30 text-rose-200";
+                message.textContent = "Impossibile leggere il file: " + error.message;
+                message.classList.remove("hidden");
+            }
+        }
+
+        function appendCell(row, value) {
+            const cell = document.createElement("td");
+            cell.className = "p-2.5";
+            cell.textContent = value || "—";
+            row.appendChild(cell);
+        }
+
+        function renderExcelPreview() {
+            const body = document.getElementById("excel-preview-body");
+            body.replaceChildren();
+            pendingExcelRows.forEach(item => {
+                const row = document.createElement("tr");
+                appendCell(row, item.athlete);
+                appendCell(row, item.oneKm);
+                appendCell(row, item.split1);
+                appendCell(row, item.split2);
+                appendCell(row, item.split3);
+                appendCell(row, item.total3km);
+                appendCell(row, item.pace3km);
+                appendCell(row, item.notes);
+                body.appendChild(row);
+            });
+        }
+
+        async function saveExcelResultsToCloud() {
+            if (!resultsFirebaseReady || !signedInResultsUser) {
+                showMessage("Accesso necessario", "Configura Firebase e accedi con Google prima di importare nell’archivio online.", false);
+                return;
+            }
+            if (!pendingExcelRows.length) {
+                showMessage("Nessun dato", "Prima leggi e controlla un file Excel.", false);
+                return;
+            }
+            const testDate = document.getElementById("test-date").value;
+            const testType = document.getElementById("test-type").value;
+            if (!testDate) {
+                showMessage("Data mancante", "Seleziona la data in cui è stato svolto il test.", false);
+                return;
+            }
+            const button = document.getElementById("save-excel-results-btn");
+            button.disabled = true;
+            try {
+                const collection = resultsDb.collection("users").doc(signedInResultsUser.uid).collection("testResults");
+                const chunks = [];
+                for (let i = 0; i < pendingExcelRows.length; i += 400) chunks.push(pendingExcelRows.slice(i, i + 400));
+                for (const chunk of chunks) {
+                    const batch = resultsDb.batch();
+                    chunk.forEach(item => {
+                        const ref = collection.doc();
+                        batch.set(ref, {...item, testDate, testType, importedAt: firebase.firestore.FieldValue.serverTimestamp()});
+                    });
+                    await batch.commit();
+                }
+                showMessage("Importazione completata", "Importati " + pendingExcelRows.length + " risultati nell’archivio online.", true);
+                await loadCloudResults();
+            } catch (error) {
+                showMessage("Errore di importazione", error.message + " Verifica anche le regole di sicurezza Firestore.", false);
+            } finally {
+                button.disabled = !signedInResultsUser || pendingExcelRows.length === 0;
+            }
+        }
+
+        async function loadCloudResults() {
+            if (!resultsFirebaseReady || !signedInResultsUser) return;
+            const body = document.getElementById("cloud-results-body");
+            body.replaceChildren();
+            try {
+                const snapshot = await resultsDb.collection("users").doc(signedInResultsUser.uid)
+                    .collection("testResults").orderBy("testDate", "desc").limit(1000).get();
+                cloudResultsCache = snapshot.docs.map(doc => ({id:doc.id, ...doc.data()}));
+                document.getElementById("cloud-results-count").textContent = cloudResultsCache.length + " risultati caricati (massimo 1.000 visualizzati).";
+                if (!cloudResultsCache.length) {
+                    const row = document.createElement("tr");
+                    const cell = document.createElement("td");
+                    cell.colSpan = 8;
+                    cell.className = "p-5 text-center text-stone-500";
+                    cell.textContent = "Archivio vuoto. Importa il primo file Excel.";
+                    row.appendChild(cell); body.appendChild(row); return;
+                }
+                cloudResultsCache.forEach(item => {
+                    const row = document.createElement("tr");
+                    appendCell(row, item.testDate || "");
+                    appendCell(row, item.testType || "");
+                    appendCell(row, item.athlete || "");
+                    appendCell(row, item.oneKm || "");
+                    appendCell(row, [item.split1,item.split2,item.split3].filter(Boolean).join(" / "));
+                    appendCell(row, item.total3km || "");
+                    appendCell(row, item.pace3km || "");
+                    appendCell(row, item.notes || "");
+                    body.appendChild(row);
+                });
+            } catch (error) {
+                document.getElementById("cloud-results-count").textContent = "Errore nel caricamento dell’archivio.";
+                setCloudStatus("Non riesco a leggere Firestore: " + error.message + " Controlla le regole indicate in README-FIREBASE.md.", false);
+            }
+        }
+
+        function exportTestResultsCSV() {
+            if (!cloudResultsCache.length) {
+                showMessage("Archivio vuoto", "Accedi e carica i risultati online prima di esportare.", false);
+                return;
+            }
+            const headers = ["Data test","Tipo test","Atleta","1 km (Tempo)","3 km (Tempo) (1)","3 km (Tempo) (2)","3 km (Tempo) (3)","3 km (Tempo)","Ritmo 3 km","Note"];
+            const quote = value => '"' + String(value == null ? "" : value).replace(/"/g,'""') + '"';
+            const rows = cloudResultsCache.map(item => [
+                item.testDate,item.testType,item.athlete,item.oneKm,item.split1,item.split2,item.split3,item.total3km,item.pace3km,item.notes
+            ].map(quote).join(";"));
+            const blob = new Blob(["\uFEFF" + [headers.map(quote).join(";"),...rows].join("\r\n")], {type:"text/csv;charset=utf-8;"});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "palio_risultati_test_" + new Date().toISOString().slice(0,10) + ".csv";
+            document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const dateInput = document.getElementById("test-date");
+            if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
+            if (!configureResultsFirebase()) {
+                setCloudStatus("Anteprima Excel disponibile. Per salvare online su tutti i dispositivi, configura Firebase seguendo README-FIREBASE.md.", false);
+            }
+        });
+
+    
     </script>
 </body>
 </html>
