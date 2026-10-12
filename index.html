@@ -160,7 +160,7 @@
                 class="w-full bg-rose-900 hover:bg-rose-800 active:bg-rose-950 text-white text-sm font-semibold px-4 py-3 rounded-xl border border-rose-700/50 flex items-center justify-center gap-2 transition">
                 <i class="fa-solid fa-table-list"></i> Tutti i risultati
             </button>
-            <div id="github-csv-panel" class="hidden mt-4 space-y-3">
+            <div id="github-csv-panel" class="mt-4 space-y-3" style="display: none;">
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <h3 class="text-sm font-semibold text-white">Risultati dei test</h3>
@@ -856,8 +856,8 @@
         function toggleGitHubCSVResults() {
             const panel = document.getElementById("github-csv-panel");
             const button = document.getElementById("show-all-results-btn");
-            const opening = panel.classList.contains("hidden");
-            panel.classList.toggle("hidden", !opening);
+            const opening = panel.style.display === "none";
+            panel.style.display = opening ? "block" : "none";
             button.setAttribute("aria-expanded", String(opening));
             if (opening && !panel.dataset.loaded) {
                 loadGitHubCSVResults().then(() => { panel.dataset.loaded = "true"; });
