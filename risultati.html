@@ -47,14 +47,14 @@ const csvUrl = "https://raw.githubusercontent.com/ilbeppe90/Cronometro/main/dati
 let allRows = [];
 function parseCSV(text){
   const rows=[]; let row=[], field="", quoted=false;
-  text=text.replace(/^\\uFEFF/,"");
+  text = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
   for(let i=0;i<text.length;i++){
     const ch=text[i], next=text[i+1];
     if(ch==='"'&&quoted&&next==='"'){field+='"';i++;}
     else if(ch==='"') quoted=!quoted;
     else if(ch===';'&&!quoted){row.push(field);field="";}
-    else if((ch==='\\n'||ch==='\\r')&&!quoted){
-      if(ch==='\\r'&&next==='\\n')i++;
+    else if((ch.charCodeAt(0)===10||ch.charCodeAt(0)===13)&&!quoted){
+      if(ch.charCodeAt(0)===13&&next&&next.charCodeAt(0)===10)i++;
       row.push(field);field="";
       if(row.some(v=>v.trim()!==""))rows.push(row);
       row=[];
