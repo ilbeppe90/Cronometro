@@ -11,7 +11,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { overscroll-behavior-y: none; }
-        .mobile-athlete-cards { display: none; }
         /* Versione mobile temporanea: controlli più grandi e layout touch-friendly */
         @media (max-width: 640px) {
             body { font-size: 16px; padding-bottom: 1rem; }
@@ -27,25 +26,9 @@
             button, main a { min-height: 48px; font-size: .95rem !important; }
             #global-timer { font-size: clamp(2.7rem, 13vw, 4rem) !important; letter-spacing: .04em !important; margin: .8rem 0 !important; }
             #btn-start, #btn-pause, #btn-reset { min-height: 58px; flex-direction: column; gap: .25rem !important; }
-            /* Su smartphone sostituiamo la tabella larga con schede atleta verticali */
-            #athlete-table-wrap { display: none !important; }
-            .mobile-athlete-cards { display: grid; gap: .8rem; }
-            .mobile-athlete-card { background: #1c1917; border: 1px solid rgba(127,29,29,.8); border-radius: 1rem; padding: 1rem; box-shadow: 0 5px 16px rgba(0,0,0,.18); }
-            .mobile-athlete-card .athlete-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:.7rem; padding-bottom:.8rem; border-bottom:1px solid rgba(127,29,29,.5); margin-bottom:.8rem; }
-            .mobile-athlete-card .athlete-card-name { font-size:1.05rem; font-weight:700; color:#fff; line-height:1.3; overflow-wrap:anywhere; }
-            .mobile-athlete-card .athlete-card-rank { display:inline-flex; align-items:center; justify-content:center; min-width:2rem; height:2rem; border-radius:.65rem; background:#292524; color:#fcd34d; font-weight:800; }
-            .mobile-athlete-card .athlete-card-best { text-align:right; white-space:nowrap; }
-            .mobile-athlete-card .athlete-card-best small { display:block; font-size:.68rem; text-transform:uppercase; color:#a8a29e; margin-bottom:.15rem; }
-            .mobile-athlete-card .athlete-card-best strong { font:700 1.05rem ui-monospace,monospace; color:#fb7185; }
-            .mobile-athlete-card .attempt-label { display:block; font-size:.75rem; color:#d6d3d1; margin-bottom:.35rem; font-weight:600; }
-            .mobile-athlete-card .attempt-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; }
-            .mobile-athlete-card .attempt-cell { min-width:0; }
-            .mobile-athlete-card .attempt-cell button { width:100%; min-height:52px; padding:.65rem .45rem; font-size:.9rem !important; }
-            .mobile-athlete-card .attempt-time { min-height:52px; display:flex; align-items:center; justify-content:space-between; gap:.3rem; padding:.55rem; border-radius:.75rem; background:rgba(127,29,29,.25); border:1px solid rgba(127,29,29,.65); }
-            .mobile-athlete-card .attempt-time span { font:700 .88rem ui-monospace,monospace; color:#fda4af; }
-            .mobile-athlete-card .attempt-time button { min-height:36px; width:36px; padding:.3rem; flex:0 0 36px; }
-            .mobile-athlete-card .athlete-card-reset { min-height:40px; width:100%; margin-top:.75rem; background:#292524; border:1px solid #44403c; border-radius:.7rem; color:#d6d3d1; font-size:.8rem !important; }
-            .mobile-athlete-empty { text-align:center; padding:2rem 1rem; border:1px dashed #57534e; border-radius:1rem; color:#a8a29e; }
+            #dynamic-table { min-width: 650px; }
+            #dynamic-table th, #dynamic-table td { padding: .8rem .65rem !important; font-size: .85rem !important; }
+            .overflow-x-auto { -webkit-overflow-scrolling: touch; }
         }
     </style>
 
@@ -169,7 +152,7 @@
             </div>
 
             <!-- Responsive Dynamic Table Container -->
-            <div id="athlete-table-wrap" class="overflow-x-auto rounded-xl border border-red-950 shadow-inner -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div class="overflow-x-auto rounded-xl border border-red-950 shadow-inner -mx-4 sm:mx-0 px-4 sm:px-0">
                 <table class="w-full text-left border-collapse" id="dynamic-table">
                     <thead id="athletes-table-head">
                         <tr class="bg-red-950/70 text-stone-300 text-[11px] sm:text-xs uppercase tracking-wider border-b border-red-900/50">
@@ -192,7 +175,6 @@
                     </tbody>
                 </table>
             </div>
-            <div id="mobile-athlete-cards" class="mobile-athlete-cards" aria-live="polite"></div>
         </div>
 
     
@@ -399,7 +381,6 @@
                 </tr>
             `;
 
-            const mobileCards = document.getElementById('mobile-athlete-cards');
             if (athletes.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -409,7 +390,6 @@
                         </td>
                     </tr>
                 `;
-                mobileCards.innerHTML = '<div class="mobile-athlete-empty"><i class="fa-solid fa-clipboard-list text-2xl mb-3 block"></i>Carica gli atleti per visualizzare qui le schede individuali.</div>';
                 return;
             }
 
@@ -461,34 +441,6 @@
                             </button>
                         </td>
                     </tr>
-                `;
-            }).join('');
-
-            // Vista smartphone: una scheda leggibile per atleta, senza scorrimento orizzontale.
-            mobileCards.innerHTML = sortedList.map((athlete, index) => {
-                const rank = athlete.hasValid
-                    ? sortedList.filter(x => x.hasValid && x.bestTime <= athlete.bestTime).length
-                    : null;
-                const rankLabel = rank ? String(rank) : '—';
-                const attempts = Array.from({length: totalAttempts}, (_, i) => {
-                    const time = athlete.times[i];
-                    const content = time !== null
-                        ? `<div class="attempt-time"><span>${formatTime(time)}</span><button onclick="resetAthleteSlot(${athlete.id}, ${i})" aria-label="Azzera tentativo ${i + 1} di ${escapeHtml(athlete.name)}" title="Rifai tentativo"><i class="fa-solid fa-xmark"></i></button></div>`
-                        : `<button onclick="recordAthleteSlot(${athlete.id}, ${i})" class="bg-stone-800 active:bg-rose-900 text-stone-100 border border-stone-700 rounded-xl"><i class="fa-solid fa-stopwatch text-rose-400 mr-1"></i> Registra</button>`;
-                    return `<div class="attempt-cell"><span class="attempt-label">Tentativo ${i + 1}</span>${content}</div>`;
-                }).join('');
-                return `
-                    <article class="mobile-athlete-card">
-                        <div class="athlete-card-top">
-                            <div class="flex items-start gap-2 min-w-0">
-                                <span class="athlete-card-rank">${rankLabel}</span>
-                                <div class="athlete-card-name">${escapeHtml(athlete.name)}</div>
-                            </div>
-                            <div class="athlete-card-best"><small>Migliore</small><strong>${formatTime(athlete.bestTime)}</strong></div>
-                        </div>
-                        <div class="attempt-row">${attempts}</div>
-                        <button class="athlete-card-reset" onclick="resetSingleAthlete(${athlete.id})"><i class="fa-solid fa-arrow-rotate-left mr-1"></i> Azzera tutti i tempi di questo atleta</button>
-                    </article>
                 `;
             }).join('');
         }
