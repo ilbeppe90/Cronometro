@@ -154,32 +154,18 @@
         </div>
 
     
-        <!-- Risultati CSV: visibili su richiesta -->
-        <section id="results-import-section" class="bg-stone-900/90 border border-red-950 rounded-2xl p-4 sm:p-5 shadow-xl">
-            <button id="show-all-results-btn" onclick="toggleGitHubCSVResults()" aria-expanded="false" aria-controls="github-csv-panel"
-                class="w-full bg-rose-900 hover:bg-rose-800 active:bg-rose-950 text-white text-sm font-semibold px-4 py-3 rounded-xl border border-rose-700/50 flex items-center justify-center gap-2 transition">
-                <i class="fa-solid fa-table-list"></i> Tutti i risultati
-            </button>
-            <div id="github-csv-panel" class="mt-4 space-y-3" style="display: none;">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <h3 class="text-sm font-semibold text-white">Risultati dei test</h3>
-                        <p id="github-csv-status" class="text-[11px] text-stone-400">Caricamento del file CSV...</p>
-                    </div>
-                    <button onclick="loadGitHubCSVResults()" class="bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs px-3 py-2 rounded-lg border border-stone-700">
-                        <i class="fa-solid fa-rotate mr-1"></i> Aggiorna
-                    </button>
+        <!-- Accesso alla pagina separata dei risultati -->
+        <section class="bg-stone-900/90 border border-red-950 rounded-2xl p-4 sm:p-5 shadow-xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-rose-500"></i> Risultati dei test di corsa
+                    </h2>
+                    <p class="text-[11px] sm:text-xs text-stone-400">Consulta date, tempi, parziali e note nella pagina dedicata.</p>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-red-950">
-                    <table class="w-full text-left border-collapse min-w-[850px]">
-                        <thead class="bg-red-950/70 text-stone-300 text-[11px] uppercase">
-                            <tr><th class="p-2.5">Atleta</th><th class="p-2.5">1 km</th><th class="p-2.5">3 km (1)</th><th class="p-2.5">3 km (2)</th><th class="p-2.5">3 km (3)</th><th class="p-2.5">Totale 3 km</th><th class="p-2.5">Ritmo</th><th class="p-2.5">Note</th></tr>
-                        </thead>
-                        <tbody id="github-csv-results-body" class="divide-y divide-red-950/40 text-xs text-stone-200">
-                            <tr><td colspan="8" class="p-5 text-center text-stone-500">Premi "Tutti i risultati" per visualizzare la tabella.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <a href="risultati.html" class="bg-rose-900 hover:bg-rose-800 text-white text-sm font-semibold px-4 py-3 rounded-xl border border-rose-700/50 flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Apri tutti i risultati
+                </a>
             </div>
         </section>
 
