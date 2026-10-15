@@ -67,19 +67,39 @@ function render(){
   const q=document.getElementById("search").value.trim().toLocaleLowerCase("it");
   const body=document.getElementById("results-body");body.replaceChildren();
   const shown=allRows.filter(r=>r.some(v=>String(v||"").toLocaleLowerCase("it").includes(q)));
-  shown.forEach((r,i)=>{
-    const tr=document.createElement("tr");
-    tr.className=i%2===0?"bg-stone-900":"bg-stone-900/60";
-    r.forEach((v,j)=>{
-      const td=document.createElement("td");td.className="p-3 align-top "+(j===0?"font-medium text-white":"text-stone-300");
-      td.textContent=String(v||"").trim()||"—";
-      if(j===1&&String(v).trim().toLowerCase()==="da fare"){td.className+=" text-amber-300";}
-      tr.appendChild(td);
+  const groups=[
+    {name:"OK",label:"Test completato",style:"text-emerald-300"},
+    {name:"SOLO 1",label:"Solo Test 1",style:"text-sky-300"},
+    {name:"DA FARE",label:"Da fare",style:"text-amber-300"}
+  ];
+  let rowIndex=0;
+  groups.forEach(group=>{
+    const rows=shown.filter(r=>(r[1]||"").trim().toLocaleUpperCase("it")===group.name);
+    if(!rows.length)return;
+    const heading=document.createElement("tr");
+    heading.className="bg-stone-800";
+    const cell=document.createElement("td");
+    cell.colSpan=17;
+    cell.className="px-3 py-3 font-bold "+group.style;
+    cell.textContent=group.label+" ("+rows.length+")";
+    heading.appendChild(cell);body.appendChild(heading);
+    rows.forEach(r=>{
+      const tr=document.createElement("tr");
+      tr.className=rowIndex++%2===0?"bg-stone-900":"bg-stone-900/60";
+      r.forEach((v,j)=>{
+        const td=document.createElement("td");td.className="p-3 align-top "+(j===0?"font-medium text-white":"text-stone-300");
+        td.textContent=String(v||"").trim()||"—";
+        if(j===1){
+          const state=String(v||"").trim().toLocaleUpperCase("it");
+          td.className+=" font-semibold "+(state==="OK"?"text-emerald-300":state==="SOLO 1"?"text-sky-300":state==="DA FARE"?"text-amber-300":"");
+        }
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
     });
-    body.appendChild(tr);
   });
   if(!shown.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=17;td.className="p-6 text-center text-stone-500";td.textContent="Nessun risultato corrispondente.";tr.appendChild(td);body.appendChild(tr);}
-  document.getElementById("status").textContent=shown.length+" di "+allRows.length+" atlete visualizzate.";
+  document.getElementById("status").textContent=shown.length+" di "+allRows.length+" atlete visualizzate · OK: "+shown.filter(r=>(r[1]||"").toUpperCase()==="OK").length+" · Solo 1: "+shown.filter(r=>(r[1]||"").toUpperCase()==="SOLO 1").length+" · Da fare: "+shown.filter(r=>(r[1]||"").toUpperCase()==="DA FARE").length;
 }
 async function loadResults(){
   const status=document.getElementById("status");
