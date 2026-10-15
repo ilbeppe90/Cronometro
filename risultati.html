@@ -10,7 +10,11 @@
 <style>
 body{font-family:Inter,sans-serif;-webkit-tap-highlight-color:transparent}
 html,body{overscroll-behavior-y:none}
-th{white-space:nowrap}
+.result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+@media(min-width:900px){.result-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.result-item{min-width:0;border:1px solid rgba(120,113,108,.22);background:rgba(12,10,9,.45);border-radius:.65rem;padding:.6rem}
+.result-label{font-size:.68rem;color:#a8a29e;margin-bottom:.2rem}
+.result-value{font-size:.85rem;color:#f5f5f4;overflow-wrap:anywhere}
 </style>
 </head>
 <body class="bg-stone-950 text-stone-100 min-h-screen">
@@ -29,17 +33,8 @@ th{white-space:nowrap}
         <button id="refresh" class="bg-rose-900 hover:bg-rose-800 border border-rose-700/50 rounded-xl px-4 py-2 text-sm font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Aggiorna</button>
       </div>
     </div>
-    <div class="overflow-x-auto rounded-xl border border-red-950">
-      <table class="w-full text-left border-collapse min-w-[2100px]">
-        <thead class="bg-red-950/80 text-stone-300 text-[11px] uppercase tracking-wide">
-          <tr>
-            <th class="p-3">Atleta</th><th class="p-3">Stato test</th><th class="p-3">Data Test 1</th><th class="p-3">1 km</th><th class="p-3">3 km (1)</th><th class="p-3">3 km (2)</th><th class="p-3">3 km (3)</th><th class="p-3">Totale 3 km</th><th class="p-3">Ritmo 3 km</th><th class="p-3">Note Test 1</th><th class="p-3">Data Test 2</th><th class="p-3">Squat</th><th class="p-3">Affondi alternati</th><th class="p-3">Plank</th><th class="p-3">Salita 1 km</th><th class="p-3">RPE</th><th class="p-3">Note Test 2</th>
-          </tr>
-        </thead>
-        <tbody id="results-body" class="divide-y divide-red-950/40 text-sm"></tbody>
-      </table>
-    </div>
-    <p class="mt-3 text-[11px] text-stone-500">I dati vengono letti da <code>dati/risultati.csv</code>. La tabella include i risultati del Test 1 e del Test 2; scorri orizzontalmente per vedere tutte le colonne.</p>
+    <div id="results-body" class="space-y-5"></div>
+    <p class="mt-3 text-[11px] text-stone-500">I dati vengono letti da <code>dati/risultati.csv</code>. Tutti i risultati del Test 1 e del Test 2 sono mostrati in schede, senza scorrimento orizzontale.</p>
   </section>
 </main>
 <script>
@@ -68,37 +63,47 @@ function render(){
   const body=document.getElementById("results-body");body.replaceChildren();
   const shown=allRows.filter(r=>r.some(v=>String(v||"").toLocaleLowerCase("it").includes(q)));
   const groups=[
-    {name:"OK",label:"Test completato",style:"text-emerald-300"},
-    {name:"SOLO 1",label:"Solo Test 1",style:"text-sky-300"},
-    {name:"DA FARE",label:"Da fare",style:"text-amber-300"}
+    {name:"OK",label:"Test completato",style:"text-emerald-300",border:"border-emerald-900/50"},
+    {name:"SOLO 1",label:"Solo Test 1",style:"text-sky-300",border:"border-sky-900/50"},
+    {name:"DA FARE",label:"Da fare",style:"text-amber-300",border:"border-amber-900/50"}
   ];
-  let rowIndex=0;
+  const labels=["Atleta","Stato test","Data Test 1","1 km","3 km (1)","3 km (2)","3 km (3)","Totale 3 km","Ritmo 3 km","Note Test 1","Data Test 2","Squat","Affondi alternati","Plank","Salita 1 km","RPE","Note Test 2"];
   groups.forEach(group=>{
     const rows=shown.filter(r=>(r[1]||"").trim().toLocaleUpperCase("it")===group.name);
     if(!rows.length)return;
-    const heading=document.createElement("tr");
-    heading.className="bg-stone-800";
-    const cell=document.createElement("td");
-    cell.colSpan=17;
-    cell.className="px-3 py-3 font-bold "+group.style;
-    cell.textContent=group.label+" ("+rows.length+")";
-    heading.appendChild(cell);body.appendChild(heading);
+    const section=document.createElement("section");
+    const heading=document.createElement("h3");
+    heading.className="font-bold text-lg mb-3 "+group.style;
+    heading.textContent=group.label+" ("+rows.length+")";
+    section.appendChild(heading);
+    const list=document.createElement("div");list.className="grid grid-cols-1 xl:grid-cols-2 gap-4";
     rows.forEach(r=>{
-      const tr=document.createElement("tr");
-      tr.className=rowIndex++%2===0?"bg-stone-900":"bg-stone-900/60";
-      r.forEach((v,j)=>{
-        const td=document.createElement("td");td.className="p-3 align-top "+(j===0?"font-medium text-white":"text-stone-300");
-        td.textContent=String(v||"").trim()||"—";
-        if(j===1){
-          const state=String(v||"").trim().toLocaleUpperCase("it");
-          td.className+=" font-semibold "+(state==="OK"?"text-emerald-300":state==="SOLO 1"?"text-sky-300":state==="DA FARE"?"text-amber-300":"");
+      const card=document.createElement("article");
+      card.className="rounded-xl border "+group.border+" bg-stone-950/70 p-3 sm:p-4 min-w-0";
+      const top=document.createElement("div");top.className="flex flex-wrap items-start justify-between gap-2 mb-3";
+      const name=document.createElement("h4");name.className="font-bold text-base sm:text-lg text-white";name.textContent=(r[0]||"Atleta").trim();
+      const badge=document.createElement("span");badge.className="text-xs font-semibold rounded-full px-2 py-1 bg-stone-800 "+group.style;badge.textContent=(r[1]||"—").trim();
+      top.append(name,badge);card.appendChild(top);
+      const makeGroup=(title,from,to)=>{
+        const wrap=document.createElement("div");wrap.className="mb-3 last:mb-0";
+        const sub=document.createElement("p");sub.className="text-[11px] uppercase tracking-wider text-stone-500 font-semibold mb-2";sub.textContent=title;wrap.appendChild(sub);
+        const grid=document.createElement("div");grid.className="result-grid";
+        for(let j=from;j<to;j++){
+          if(j===0||j===1)continue;
+          const item=document.createElement("div");item.className="result-item";
+          const lab=document.createElement("div");lab.className="result-label";lab.textContent=labels[j];
+          const val=document.createElement("div");val.className="result-value";val.textContent=String(r[j]||"").trim()||"—";
+          item.append(lab,val);grid.appendChild(item);
         }
-        tr.appendChild(td);
-      });
-      body.appendChild(tr);
+        wrap.appendChild(grid);card.appendChild(wrap);
+      };
+      makeGroup("Test 1 · corsa",2,10);
+      makeGroup("Test 2 · forza e salita",10,17);
+      list.appendChild(card);
     });
+    section.appendChild(list);body.appendChild(section);
   });
-  if(!shown.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=17;td.className="p-6 text-center text-stone-500";td.textContent="Nessun risultato corrispondente.";tr.appendChild(td);body.appendChild(tr);}
+  if(!shown.length){const empty=document.createElement("p");empty.className="p-6 text-center text-stone-500";empty.textContent="Nessun risultato corrispondente.";body.appendChild(empty);}
   document.getElementById("status").textContent=shown.length+" di "+allRows.length+" atlete visualizzate · OK: "+shown.filter(r=>(r[1]||"").toUpperCase()==="OK").length+" · Solo 1: "+shown.filter(r=>(r[1]||"").toUpperCase()==="SOLO 1").length+" · Da fare: "+shown.filter(r=>(r[1]||"").toUpperCase()==="DA FARE").length;
 }
 async function loadResults(){
