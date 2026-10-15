@@ -30,16 +30,16 @@ th{white-space:nowrap}
       </div>
     </div>
     <div class="overflow-x-auto rounded-xl border border-red-950">
-      <table class="w-full text-left border-collapse min-w-[1050px]">
+      <table class="w-full text-left border-collapse min-w-[2100px]">
         <thead class="bg-red-950/80 text-stone-300 text-[11px] uppercase tracking-wide">
           <tr>
-            <th class="p-3">Atleta</th><th class="p-3">Data</th><th class="p-3">1 km</th><th class="p-3">3 km (1)</th><th class="p-3">3 km (2)</th><th class="p-3">3 km (3)</th><th class="p-3">Totale 3 km</th><th class="p-3">Ritmo 3 km</th><th class="p-3">Note</th>
+            <th class="p-3">Atleta</th><th class="p-3">Stato test</th><th class="p-3">Data Test 1</th><th class="p-3">1 km</th><th class="p-3">3 km (1)</th><th class="p-3">3 km (2)</th><th class="p-3">3 km (3)</th><th class="p-3">Totale 3 km</th><th class="p-3">Ritmo 3 km</th><th class="p-3">Note Test 1</th><th class="p-3">Data Test 2</th><th class="p-3">Squat</th><th class="p-3">Affondi alternati</th><th class="p-3">Plank</th><th class="p-3">Salita 1 km</th><th class="p-3">RPE</th><th class="p-3">Note Test 2</th>
           </tr>
         </thead>
         <tbody id="results-body" class="divide-y divide-red-950/40 text-sm"></tbody>
       </table>
     </div>
-    <p class="mt-3 text-[11px] text-stone-500">I dati vengono letti da <code>dati/risultati.csv</code>. Per visualizzare tutte le colonne su telefono, scorri la tabella orizzontalmente.</p>
+    <p class="mt-3 text-[11px] text-stone-500">I dati vengono letti da <code>dati/risultati.csv</code>. La tabella include i risultati del Test 1 e del Test 2; scorri orizzontalmente per vedere tutte le colonne.</p>
   </section>
 </main>
 <script>
@@ -78,7 +78,7 @@ function render(){
     });
     body.appendChild(tr);
   });
-  if(!shown.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=9;td.className="p-6 text-center text-stone-500";td.textContent="Nessun risultato corrispondente.";tr.appendChild(td);body.appendChild(tr);}
+  if(!shown.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=17;td.className="p-6 text-center text-stone-500";td.textContent="Nessun risultato corrispondente.";tr.appendChild(td);body.appendChild(tr);}
   document.getElementById("status").textContent=shown.length+" di "+allRows.length+" atlete visualizzate.";
 }
 async function loadResults(){
@@ -90,11 +90,11 @@ async function loadResults(){
     const rows=parseCSV(await response.text());
     if(rows.length<2)throw new Error("Il file non contiene risultati.");
     const headers=rows[0].map(h=>h.trim().toLocaleLowerCase("it"));
-    const indexes=["atleta","data","1 km (tempo)","3 km (tempo) (1)","3 km (tempo) (2)","3 km (tempo) (3)","3 km (tempo)","ritmo 3 km","note"].map(h=>headers.indexOf(h));
+    const indexes=["atleta","test 1 e 2","data test 1","1 km (tempo)","3 km (tempo) (1)","3 km (tempo) (2)","3 km (tempo) (3)","3 km (tempo)","ritmo 3 km","note test 1","data test 2","squat","affondi alternati","plank","salita 1 km","rpe","note test 2"].map(h=>headers.indexOf(h));
     if(indexes[0]<0)throw new Error("Colonna Atleta non trovata.");
     allRows=rows.slice(1).filter(r=>(r[indexes[0]]||"").trim()).map(r=>indexes.map(i=>i>=0?(r[i]||"").trim():""));
     render();
-  }catch(e){status.textContent="Errore nel caricamento del CSV: "+e.message;const body=document.getElementById("results-body");body.replaceChildren();const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=9;td.className="p-6 text-center text-rose-300";td.textContent="Impossibile caricare il CSV. Verifica che il file sia presente nella repository.";tr.appendChild(td);body.appendChild(tr);}
+  }catch(e){status.textContent="Errore nel caricamento del CSV: "+e.message;const body=document.getElementById("results-body");body.replaceChildren();const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=17;td.className="p-6 text-center text-rose-300";td.textContent="Impossibile caricare il CSV. Verifica che il file sia presente nella repository.";tr.appendChild(td);body.appendChild(tr);}
 }
 document.getElementById("search").addEventListener("input",render);
 document.getElementById("refresh").addEventListener("click",loadResults);
