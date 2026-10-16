@@ -1,23 +1,12 @@
-Atleta;Test 1 e 2;Data Test 1;1 km (Tempo);3 km (Tempo) (1);3 km (Tempo) (2);3 km (Tempo) (3);3 km (Tempo);Ritmo 3 km;Note Test 1;Data Test 2;Squat;Affondi alternati;Plank;Salita 1 km;RPE;Note Test 2
-Bonetto Gaia;SOLO 1;07/10/2026;05:07;05:50;07:05;05:10;18:05;06:01;mal di schiena;da fare;;;;;;
-Ferro Federica;OK;07/10/2026;04:06;04:55;05:07;04:43;14:45;04:55;ok;14/10/2026;30;33;03:59;00:04;7;
-Gallina Michela;OK;07/10/2026;05:27;05:55;06:17;06:18;18:30;06:10;ok;14/10/2026;35;31;01:48;00:06;8;
-Gioele;OK;07/10/2026;05:27;05:31;06:23;06:33;18:27;06:09;era la priva volta che correva;14/10/2026;40;36;02:36;00:05;5;
-Michielon Martina;OK;07/10/2026;04:05;04:55;05:07;05:22;15:24;05:08;un po' fiacca;14/10/2026;35;31;00:00;00:04;7;stanca
-Sartor Alessandra;OK;07/10/2026;04:54;05:22;05:33;05:40;16:35;05:31;ok;14/10/2026;29;33;01:18;00:04;7;
-Jedrejcic Giulia;SOLO 1;08/10/2026;03:55;03:50;04:00;04:05;11:55;03:58;5x1000 non il test effettivo;da fare;;;;;;
-Aggio Aurora;SOLO 1;12/10/2026;07:10;;;;;;solo 1km;da fare;;;;;;
-Beatrice Sofia;SOLO 1;12/10/2026;06:28;07:03;;;;;solo1/3;da fare;;;;;;
-Bonetto Beatrice;SOLO 1;12/10/2026;05:18;06:07;06:15;06:08;18:30;06:10;;da fare;;;;;;
-Cloe;SOLO 1;12/10/2026;05:30;06:11;06:53;;;;solo 2/3;da fare;;;;;;
-Cristal;SOLO 1;12/10/2026;06:01;06:38;;;;;solo1/3;da fare;;;;;;
-Desti Baratta Sofia;OK;12/10/2026;04:02;05:08;05:11;04:40;14:59;04:59;;14/10/2026;69;39;03:52;00:04;8;
-Elena;OK;12/10/2026;05:27;06:12;06:50;;;;solo 2/3;14/10/2026;35;37;02:05;00:05;6;
-Gallina Monica;SOLO 1;12/10/2026;04:21;05:16;05:22;05:06;15:44;05:14;;da fare;;;;;;
-Matteo;SOLO 1;12/10/2026;04:03;05:12;;;;;solo1/3;da fare;;;;;;
-Simone;SOLO 1;12/10/2026;04:04;05:12;;;;;solo1/3;da fare;;;;;;
-Sofia new entry;OK;12/10/2026;07:38;06:28;08:17;08:22;23:07;07:42;era la priva volta che correva;14/10/2026;39;37;02:22;00:06;8;girava la testa
-Zanatta Giada;SOLO 1;12/10/2026;07:18;07:45;09:53;;;;solo 2/3 non in forma;da fare;;;;;;
+Atleta;Test 1 e 2;Data Test 1;1 km (Tempo);3 km (Tempo) (1);3 km (Tempo) (2);3 km (Tempo) (3);3 km (Tempo);Ritmo 3 km;Note;Data Test 2;Squat;Affondi alternati;Plank;Salita 1 km;RPE;Note
+Ferro Federica;OK;07/10/2026;04:06;04:55;05:07;04:43;14:45;04:55;ok;14/10/2026;30;33;03:59;04:23;7;
+Gallina Michela;OK;07/10/2026;05:27;05:55;06:17;06:18;18:30;06:10;ok;14/10/2026;35;31;01:48;06:22;8;
+Gioele;OK;07/10/2026;05:27;05:31;06:23;06:33;18:27;06:09;era la priva volta che correva;14/10/2026;40;36;02:36;05:09;5;
+Michielon Martina;OK;07/10/2026;04:05;04:55;05:07;05:22;15:24;05:08;un po' fiacca;14/10/2026;35;31;00:00;04:27;7;stanca
+Sartor Alessandra;OK;07/10/2026;04:54;05:22;05:33;05:40;16:35;05:31;ok;14/10/2026;29;33;01:18;04:59;7;
+Desti Baratta Sofia;OK;12/10/2026;04:02;05:08;05:11;04:40;14:59;04:59;;14/10/2026;69;39;03:52;04:19;8;
+Elena;OK;12/10/2026;05:27;06:12;06:50;;;;solo 2/3;14/10/2026;35;37;02:05;05:48;6;
+Sofia new entry;OK;12/10/2026;07:38;06:28;08:17;08:22;23:07;07:42;era la priva volta che correva;14/10/2026;39;37;02:22;06:42;8;girava la testa
 Aramini Valentina;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Bandiera Deborah;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Berlese Federica;DA FARE;da fare;;;;;;;;da fare;;;;;;
@@ -26,7 +15,18 @@ Crema Laura;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Dalla Libera Denise;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Faccin Anna Giulia;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Faccin Luce Carlotta;DA FARE;da fare;;;;;;;;da fare;;;;;;
-Martin Asia;DA FARE;arriva dopo;;;;;;;;da fare;;;;;;
-Mazzocato Irene;DA FARE;infortunata;;;;;;;;da fare;;;;;;
-Poloni Beatrice;DA FARE;infortunata;;;;;;;;da fare;;;;;;
+Martin Asia;DA FARE;da fare;;;;;;;;da fare;;;;;;
+Mazzocato Irene;DA FARE;da fare;;;;;;;;da fare;;;;;;
+Poloni Beatrice;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Sartor Francesca;DA FARE;da fare;;;;;;;;da fare;;;;;;
+Bonetto Gaia;SOLO 1;07/10/2026;05:07;05:50;07:05;05:10;18:05;06:01;mal di schiena;da fare;;;;;;
+Jedrejcic Giulia;SOLO 1;08/10/2026;03:55;03:50;04:00;04:05;11:55;03:58;5x1000 non il test effettivo;da fare;;;;;;
+Aggio Aurora;SOLO 1;12/10/2026;07:10;;;;;;solo 1km;da fare;;;;;;
+Beatrice Sofia;SOLO 1;12/10/2026;06:28;07:03;;;;;solo1/3;da fare;;;;;;
+Bonetto Beatrice;SOLO 1;12/10/2026;05:18;06:07;06:15;06:08;18:30;06:10;;da fare;;;;;;
+Cloe;SOLO 1;12/10/2026;05:30;06:11;06:53;;;;solo 2/3;da fare;;;;;;
+Cristal;SOLO 1;12/10/2026;06:01;06:38;;;;;solo1/3;da fare;;;;;;
+Gallina Monica;SOLO 1;12/10/2026;04:21;05:16;05:22;05:06;15:44;05:14;;da fare;;;;;;
+Matteo;SOLO 1;12/10/2026;04:03;05:12;;;;;solo1/3;da fare;;;;;;
+Simone;SOLO 1;12/10/2026;04:04;05:12;;;;;solo1/3;da fare;;;;;;
+Zanatta Giada;SOLO 1;12/10/2026;07:18;07:45;09:53;;;;solo 2/3 non in forma;da fare;;;;;;
