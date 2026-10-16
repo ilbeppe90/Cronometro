@@ -101,7 +101,7 @@ function render(){
       const vals=[r[0],r[2],r[3],r[7],r[10],statusOf(r)];
       vals.forEach((v,i)=>{
         const td=document.createElement("td");td.textContent=(v||"").trim()||"—";
-        if(i===0){td.className="font-semibold text-white";td.innerHTML="";}
+        if(i===0){td.className="font-bold text-rose-200";td.style.minWidth="150px";}
         if(i===5){const badge=document.createElement("span");badge.className="inline-block rounded-full border px-2 py-1 text-xs "+group.badge+" "+group.style;badge.textContent=statusOf(r);td.replaceChildren(badge);}
         tr.appendChild(td);
       });
