@@ -14,6 +14,9 @@ th,td{padding:.7rem .8rem;text-align:left;border-bottom:1px solid rgba(120,113,1
 th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#a8a29e;background:#1c1917}
 .table-wrap{overflow-x:auto;border:1px solid rgba(120,113,108,.2);border-radius:.8rem}
 .workout-card{scroll-margin-top:1rem}
+.date-box{display:flex;align-items:center;justify-content:center;text-align:center;min-height:76px;padding:1rem;border:1px solid #57534e;border-radius:1rem;background:#1c1917;color:#e7e5e4;font-weight:600;transition:all .15s}
+.date-box:hover{border-color:#e11d48;background:#292524}
+.date-box.active{border-color:#fb7185;background:#4c0519;color:#fff;box-shadow:0 0 0 1px #fb7185}
 @media(max-width:600px){th,td{padding:.6rem .55rem;font-size:.82rem}}
 </style>
 </head>
@@ -26,18 +29,16 @@ th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#a8a29e;b
 </header>
 <main class="max-w-5xl mx-auto p-3 sm:p-6 space-y-5">
  <section class="bg-stone-900 border border-red-950 rounded-2xl p-4 sm:p-5 shadow-xl">
-  <label for="date-select" class="block text-sm font-semibold mb-2">Seleziona la data dell'allenamento</label>
-  <div class="flex flex-col sm:flex-row gap-3">
-   <select id="date-select" class="w-full sm:max-w-sm bg-stone-950 border border-stone-700 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-rose-600"></select>
-   <div id="workout-summary" class="text-sm text-stone-400 self-center"></div>
-  </div>
+  <h2 class="text-sm font-semibold mb-3">Seleziona il giorno dell'allenamento</h2>
+  <div id="date-boxes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+  <div id="workout-summary" class="text-sm text-stone-400 mt-3"></div>
  </section>
  <div id="workout-content" class="space-y-5"></div>
  <p class="text-xs text-stone-500 px-1">Per aggiungere altri allenamenti, inviami il testo con il giorno e la data: verrà inserito come nuova scheda selezionabile.</p>
 </main>
 <script>
 const workouts = [
- {date:"2026-10-19",label:"Lunedì 19/10/2026",sections:[
+ {date:"2026-10-19",label:"Lunedì 19 ottobre 2026",sections:[
   {title:"Riscaldamento comune",rows:[["Corsa leggera","5 minuti in piano"],["Mobilità","Caviglie, anche, ginocchia e spalle"],["Squat a corpo libero","12 ripetizioni"],["Affondi alternati","10 ripetizioni totali"],["Skip","2 × 20 m"],["Corsa calciata","2 × 20 m"],["Recupero","Camminare al ritorno, senza sprint"]]},
   {title:"Corsa per gruppo",groups:[
    {name:"Gruppo A",rows:[["Ripetute","6 × 400 m a RPE 6–7"],["Recupero","90 secondi camminando o correndo piano"],["Corsa finale","5 minuti leggeri"]]},
@@ -48,7 +49,7 @@ const workouts = [
   {title:"Blocco di resistenza – tutti",intro:"Eseguire 3 giri.",rows:[["Affondi incrociati","10 per gamba"],["Squat lenti","15 ripetizioni; 2 secondi in discesa e 2 secondi in salita"],["Recupero","60 secondi tra gli esercizi; 90 secondi al termine di ogni giro"]]},
   {title:"Defaticamento e stretching",rows:[["Defaticamento","Corsa molto leggera o camminata, poi stretching"]]}
  ]},
- {date:"2026-10-22",label:"Giovedì 22/10/2026",sections:[
+ {date:"2026-10-22",label:"Giovedì 22 ottobre 2026",sections:[
   {title:"Riscaldamento comune",rows:[["Corsa leggera","5 minuti in piano"],["Mobilità","Caviglie, anche, ginocchia e spalle"],["Squat a corpo libero","12 ripetizioni"],["Affondi alternati","10 ripetizioni totali"],["Skip","2 × 20 m"],["Corsa calciata","2 × 20 m"],["Recupero","Camminare al ritorno, senza sprint"]]},
   {title:"Corsa per gruppo",groups:[
    {name:"Gruppo A",rows:[["Ripetute","6 × 500 m a RPE 6–7"],["Recupero","90 secondi camminando o correndo piano"],["Corsa finale","5 minuti leggeri"]]},
@@ -59,7 +60,7 @@ const workouts = [
   {title:"Blocco di resistenza – tutti",intro:"Eseguire 3 giri.",rows:[["Affondi incrociati","10 per gamba"],["Squat lenti","15 ripetizioni; 2 secondi in discesa e 2 secondi in salita"],["Recupero","60 secondi tra gli esercizi; 90 secondi al termine di ogni giro"]]},
   {title:"Defaticamento e stretching",rows:[["Defaticamento","Corsa molto leggera o camminata, poi stretching"]]}
  ]},
- {date:"2026-10-26",label:"Lunedì 26/10/2026",sections:[
+ {date:"2026-10-26",label:"Lunedì 26 ottobre 2026",sections:[
   {title:"Riscaldamento comune",rows:[["Corsa leggera","5 minuti in piano"],["Mobilità","Caviglie, anche, ginocchia e spalle"],["Squat a corpo libero","12 ripetizioni"],["Affondi alternati","10 ripetizioni totali"],["Skip","2 × 20 m"],["Corsa calciata","2 × 20 m"],["Recupero","Camminare al ritorno, senza sprint"]]},
   {title:"Corsa per gruppo",groups:[
    {name:"Gruppo A",rows:[["Corsa continua","30 minuti facili a RPE 4–5"],["Distanza indicativa","5–6 km"],["Allunghi","5 × 100 secondi progressivi e rilassati"],["Recupero allunghi","60 secondi camminando"],["Conclusione","3 minuti di corsa facile"]]},
@@ -70,7 +71,7 @@ const workouts = [
   {title:"Blocco di resistenza – tutti",intro:"Eseguire 3 giri.",rows:[["Affondi incrociati","10 per gamba"],["Squat lenti","15 ripetizioni; 2 secondi in discesa e 2 secondi in salita"],["Recupero","60 secondi tra gli esercizi; 90 secondi al termine di ogni giro"]]},
   {title:"Defaticamento e stretching",rows:[["Defaticamento","Corsa molto leggera o camminata, poi stretching"]]}
  ]},
- {date:"2026-10-29",label:"Giovedì 29/10/2026",sections:[
+ {date:"2026-10-29",label:"Giovedì 29 ottobre 2026",sections:[
   {title:"Riscaldamento comune",rows:[["Corsa leggera","5 minuti in piano"],["Mobilità","Caviglie, anche, ginocchia e spalle"],["Squat a corpo libero","12 ripetizioni"],["Affondi alternati","10 ripetizioni totali"],["Skip","2 × 20 m"],["Corsa calciata","2 × 20 m"],["Recupero","Camminare al ritorno, senza sprint"]]},
   {title:"Corsa per gruppo",groups:[
    {name:"Gruppo A",rows:[["Corsa facile","12–15 minuti a RPE 4–5"]]},
@@ -91,7 +92,7 @@ function makeTable(rows){
  table.appendChild(tbody);wrap.appendChild(table);return wrap;
 }
 function renderWorkout(){
- const workout=workouts.find(w=>w.date===document.getElementById("date-select").value)||workouts[0];
+ const workout=workouts.find(w=>w.date===selectedDate)||workouts[0];
  const content=document.getElementById("workout-content");content.replaceChildren();
  document.getElementById("workout-summary").textContent=workout.sections.length+" sezioni · riscaldamento, corsa, potenza e resistenza";
  const title=document.createElement("h2");title.className="text-xl font-bold";title.textContent="Allenamento – "+workout.label;
@@ -105,9 +106,24 @@ function renderWorkout(){
   content.appendChild(card);
  });
 }
-const select=document.getElementById("date-select");
-workouts.forEach(w=>{const opt=document.createElement("option");opt.value=w.date;opt.textContent=w.label;select.appendChild(opt)});
-select.value=workouts[0].date;select.addEventListener("change",renderWorkout);renderWorkout();
+let selectedDate=workouts[0].date;
+const dateBoxes=document.getElementById("date-boxes");
+workouts.forEach(w=>{
+ const button=document.createElement("button");
+ button.type="button";button.className="date-box";button.textContent=w.label;
+ button.setAttribute("aria-pressed",String(w.date===selectedDate));
+ button.addEventListener("click",()=>{
+  selectedDate=w.date;
+  dateBoxes.querySelectorAll("button").forEach(b=>{
+   const active=b.textContent===w.label;
+   b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));
+  });
+  renderWorkout();
+ });
+ if(w.date===selectedDate)button.classList.add("active");
+ dateBoxes.appendChild(button);
+});
+renderWorkout();
 </script>
 </body>
 </html>
