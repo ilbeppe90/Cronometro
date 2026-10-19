@@ -1,4 +1,4 @@
-Atleta;Test 1 e 2;Data Test 1;1 km (Tempo);3 km (Tempo) (1);3 km (Tempo) (2);3 km (Tempo) (3);3 km (Tempo);Ritmo 3 km;Note;Data Test 2;Squat;Affondi alternati;Plank;Salita 1 km;RPE;Note
+Atleta;Test 1 e 2;Data Test 1;1 km (Tempo);3 km (Tempo) (1);3 km (Tempo) (2);3 km (Tempo) (3);3 km (Tempo);Ritmo 3 km;Note Test 1;Data Test 2;Squat;Affondi alternati;Plank;Salita 1 km;RPE;Note Test 2
 Ferro Federica;OK;07/10/2026;04:06;04:55;05:07;04:43;14:45;04:55;ok;14/10/2026;30;33;03:59;04:23;7;
 Gallina Michela;OK;07/10/2026;05:27;05:55;06:17;06:18;18:30;06:10;ok;14/10/2026;35;31;01:48;06:22;8;
 Gioele;OK;07/10/2026;05:27;05:31;06:23;06:33;18:27;06:09;era la priva volta che correva;14/10/2026;40;36;02:36;05:09;5;
@@ -18,7 +18,7 @@ Faccin Luce Carlotta;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Martin Asia;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Mazzocato Irene;DA FARE;da fare;;;;;;;;da fare;;;;;;
 Poloni Beatrice;DA FARE;da fare;;;;;;;;da fare;;;;;;
-Sartor Francesca;DA FARE;da fare;;;;;;;;da fare;;;;;;
+Sartor Francesca;SOLO 1;16/10/2026;04:27;06:19;06:25;06:13;18:57;06:19;da sola;da fare;;;;;;
 Bonetto Gaia;SOLO 1;07/10/2026;05:07;05:50;07:05;05:10;18:05;06:01;mal di schiena;da fare;;;;;;
 Jedrejcic Giulia;SOLO 1;08/10/2026;03:55;03:50;04:00;04:05;11:55;03:58;5x1000 non il test effettivo;da fare;;;;;;
 Aggio Aurora;SOLO 1;12/10/2026;07:10;;;;;;solo 1km;da fare;;;;;;
