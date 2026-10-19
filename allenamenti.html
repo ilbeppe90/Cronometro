@@ -24,14 +24,14 @@ th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#a8a29e;b
 <header class="bg-red-950/95 border-b border-red-900/40 shadow-lg">
  <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
   <div><p class="text-xs text-red-200/70">Busta Postale</p><h1 class="text-2xl font-bold">Allenamenti</h1><p class="text-sm text-red-100/70 mt-1">Programma giornaliero suddiviso per data e gruppo</p></div>
-  <div class="flex gap-2 flex-wrap"><a href="cronometro.html" class="bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-xl px-3 py-2 text-sm"><i class="fa-solid fa-stopwatch mr-1"></i> Cronometro</a><a href="risultati.html" class="bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-xl px-3 py-2 text-sm">Risultati test</a></div>
+  <div class="flex gap-2 flex-wrap"><a href="index.html" class="bg-rose-700 hover:bg-rose-600 border border-rose-600 rounded-xl px-3 py-2 text-sm"><i class="fa-solid fa-house mr-1"></i> Home</a><a href="cronometro.html" class="bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-xl px-3 py-2 text-sm"><i class="fa-solid fa-stopwatch mr-1"></i> Cronometro</a><a href="risultati.html" class="bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-xl px-3 py-2 text-sm">Risultati test</a></div>
  </div>
 </header>
 <main class="max-w-5xl mx-auto p-3 sm:p-6 space-y-5">
  <section class="bg-stone-900 border border-red-950 rounded-2xl p-4 sm:p-5 shadow-xl">
   <h2 class="text-sm font-semibold mb-3">Seleziona il giorno dell'allenamento</h2>
   <div id="date-boxes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
-  <div id="workout-summary" class="text-sm text-stone-400 mt-3"></div>
+  <div id="workout-summary" class="text-sm text-stone-400 mt-3">Seleziona una data per visualizzare l'allenamento.</div>
  </section>
  <div id="workout-content" class="space-y-5"></div>
  <p class="text-xs text-stone-500 px-1">Per aggiungere altri allenamenti, inviami il testo con il giorno e la data: verrà inserito come nuova scheda selezionabile.</p>
@@ -92,8 +92,13 @@ function makeTable(rows){
  table.appendChild(tbody);wrap.appendChild(table);return wrap;
 }
 function renderWorkout(){
- const workout=workouts.find(w=>w.date===selectedDate)||workouts[0];
  const content=document.getElementById("workout-content");content.replaceChildren();
+ if(!selectedDate){
+  document.getElementById("workout-summary").textContent="Seleziona una data per visualizzare l'allenamento.";
+  return;
+ }
+ const workout=workouts.find(w=>w.date===selectedDate);
+ if(!workout)return;
  document.getElementById("workout-summary").textContent=workout.sections.length+" sezioni · riscaldamento, corsa, potenza e resistenza";
  const title=document.createElement("h2");title.className="text-xl font-bold";title.textContent="Allenamento – "+workout.label;
  const top=document.createElement("div");top.className="bg-stone-900 border border-red-950 rounded-2xl p-4 sm:p-5";top.appendChild(title);content.appendChild(top);
@@ -106,12 +111,12 @@ function renderWorkout(){
   content.appendChild(card);
  });
 }
-let selectedDate=workouts[0].date;
+let selectedDate=null;
 const dateBoxes=document.getElementById("date-boxes");
 workouts.forEach(w=>{
  const button=document.createElement("button");
  button.type="button";button.className="date-box";button.textContent=w.label;
- button.setAttribute("aria-pressed",String(w.date===selectedDate));
+ button.setAttribute("aria-pressed","false");
  button.addEventListener("click",()=>{
   selectedDate=w.date;
   dateBoxes.querySelectorAll("button").forEach(b=>{
@@ -120,7 +125,6 @@ workouts.forEach(w=>{
   });
   renderWorkout();
  });
- if(w.date===selectedDate)button.classList.add("active");
  dateBoxes.appendChild(button);
 });
 renderWorkout();
